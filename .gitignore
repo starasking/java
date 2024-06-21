@@ -3,6 +3,5 @@ build*
 **/.ipynb_checkpoints
 tags
 graph
-notes
 tests
 eigen-3.4

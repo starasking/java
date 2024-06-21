@@ -1,3 +1,3 @@
 # Graph
 
-In this project, we implement various graph-related algorithms.
+In this project, I implement various graph-related algorithms.
