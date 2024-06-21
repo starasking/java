@@ -93,37 +93,7 @@ class DirectedGraph {
     // Random generate
     void random_generate(size_t V, size_t D);
 
-    /*
-    // logs
-    greedy-related
-    minimum_spanning_tree: electrical grid, computer network
-    shortest_path: greedy
-
-    longest_path
-    tic_toc_toe
-    graph_in_molecule
-    bipartite
-    articulation points
-    max-flow min-cut
-    graph-colouring
-    planer graphs (?)
-    union-find
-    matching
-    */
 };
 
-/*
-class DirectedWeightedGraph: class DirectedGraph
-{
-    private:
-        Adjacency adjacency{};
-        std::map<std::pair<int, int>, int> edge_weight_table{};
-    public:
-        DirectedWeightedGraph(const WeightedEdges&);
-
-        bool add_edge(int from_idx, int to_idx, int value);
-        Matrix extract_matrix();
-};
-*/
 }  // namespace graph_sdk
 #endif
