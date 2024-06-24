@@ -16,5 +16,11 @@ include_directories(
 include_directories(
     ${EIGEN_ROOT_DIR}
 )
+
+if (BUILD_TESTS)
+    add_definitions("-DTESTING")
+    add_subdirectory(tests)
+endif ()
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} ${SOURCES})

@@ -1,7 +1,5 @@
 // Copyright (c) 2024 Xuemei Wang. All rights reserved.
 
-#include "../include/graph.h"
-
 #include <stdlib.h>
 #include <time.h>
 
@@ -15,6 +13,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "../include/graph.h"
 #include "../include/utils.h"
 
 namespace graph_sdk {
@@ -104,14 +103,12 @@ void DirectedGraph::exchange_nodes(size_t n1, size_t n2) {
 }
 
 void DirectedGraph::reset() {
-    std::vector<DirectedGraph::NodeAttribute> attributes =
-        DirectedGraph::get_attribute();
+    std::vector<NodeAttribute> attributes = DirectedGraph::get_attribute();
     std::set<size_t> missed{};
     auto N = adjacency_.size();
 
     for (size_t i = 0; i < N; ++i) {
-        if (attributes[i] == DirectedGraph::NodeAttribute::isolated)
-            missed.insert(i);
+        if (attributes[i] == NodeAttribute::isolated) missed.insert(i);
     }
 
     auto it = missed.begin();
@@ -165,24 +162,22 @@ Edges DirectedGraph::extract_edges() const {
     return edges;
 }
 
-std::vector<DirectedGraph::NodeAttribute> DirectedGraph::get_attribute() const {
-    std::vector<DirectedGraph::NodeAttribute> attribute(
-        adjacency_.size(), DirectedGraph::NodeAttribute::unlabelled);
+std::vector<NodeAttribute> DirectedGraph::get_attribute() const {
+    std::vector<NodeAttribute> attribute(adjacency_.size(),
+                                         NodeAttribute::unlabelled);
     for (auto i = 0; i < adjacency_.size(); ++i) {
         if (adjacency_.empty()) {
-            if (attribute[i] == DirectedGraph::NodeAttribute::unlabelled)
-                attribute[i] = DirectedGraph::NodeAttribute::isolated;
+            if (attribute[i] == NodeAttribute::unlabelled)
+                attribute[i] = NodeAttribute::isolated;
         } else {
-            if (attribute[i] == DirectedGraph::NodeAttribute::unlabelled)
-                attribute[i] = DirectedGraph::NodeAttribute::source;
+            if (attribute[i] == NodeAttribute::unlabelled)
+                attribute[i] = NodeAttribute::source;
             std::for_each(
                 adjacency_[i].begin(), adjacency_[i].end(), [&](const auto& x) {
-                    attribute[x] =
-                        (attribute[x] == DirectedGraph::NodeAttribute::source ||
-                         attribute[x] ==
-                             DirectedGraph::NodeAttribute::source_sink)
-                            ? DirectedGraph::NodeAttribute::source_sink
-                            : DirectedGraph::NodeAttribute::sink;
+                    attribute[x] = (attribute[x] == NodeAttribute::source ||
+                                    attribute[x] == NodeAttribute::source_sink)
+                                       ? NodeAttribute::source_sink
+                                       : NodeAttribute::sink;
                 });
         }
     }
@@ -321,19 +316,25 @@ DirectedGraph DirectedGraph::meta_graph() const {
 }
 
 void DirectedGraph::extract_sc_helper(
-    size_t curr, std::vector<size_t>& chain, std::vector<bool>& visited,
-    std::vector<size_t>& scc, std::vector<std::vector<size_t>>& cycles) const {
-    visited[curr] = true;
+    size_t curr, std::vector<size_t>& chain, std::vector<int>& visited,
+    const std::vector<size_t>& scc,
+    std::vector<std::vector<size_t>>& cycles) const {
+    visited[curr] = 1;
     chain.push_back(curr);
 
-    for (auto i = curr + 1; i < scc.size(); ++i) {
-        if (scc[i] == scc[chain[0]] && !visited[i]) {
-            DirectedGraph::extract_sc_helper(i, chain, visited, scc, cycles);
-        }
-        if (i == chain[0]) {
+    for (auto x : adjacency_[curr]) {
+        if (x == chain[0]) {
+            chain.push_back(x);
             cycles.push_back(chain);
+            chain.pop_back();
+        } else if (scc[x] == scc[chain[0]]) {
+            if (visited[x] == 0)
+                DirectedGraph::extract_sc_helper(x, chain, visited, scc,
+                                                 cycles);
         }
     }
+
+    visited[curr] = 0;
     chain.pop_back();
 }
 
@@ -341,13 +342,16 @@ std::vector<std::vector<size_t>> DirectedGraph::extract_simple_cycles() const {
     std::vector<std::vector<size_t>> cycles{};
     auto [cyclic, scc] = DirectedGraph::extract_scc();
     if (!cyclic) return cycles;
+    print_elem(scc);
 
+    auto N = adjacency_.size();
     std::vector<size_t> chain{};
-    std::vector<bool> visited{};
+    std::vector<int> visited(N, 0);
     for (size_t i = 0; i < adjacency_.size(); ++i) {
-        chain = std::vector<size_t>{i};
+        chain.clear();
+        std::fill_n(visited.begin(), N, -1);
         std::fill_n(visited.begin() + i, visited.end() - visited.begin() - i,
-                    false);
+                    0);
         DirectedGraph::extract_sc_helper(i, chain, visited, scc, cycles);
     }
     return cycles;

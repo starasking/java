@@ -15,24 +15,35 @@ int main() {
     dgraph.random_generate(10, 2);
     dgraph.print_graph();
 
-    std::cout << dgraph.has_cycle() << std::endl;
-    // auto dfs_nodes = dgraph2.dfs();
-    // print_elem(dfs_nodes);
-    auto [is_acyclic, topo_sorted] = dgraph.topological_sort();
-    std::cout << is_acyclic << std::endl;
-    if (is_acyclic) {
-        while (!topo_sorted.empty()) {
-            auto tmp = topo_sorted.top();
-            topo_sorted.pop();
-            std::cout << tmp << ' ';
-        }
-        std::cout << std::endl;
+    if (dgraph.has_cycle()) {
+        auto circles = dgraph.extract_simple_cycles();
+        printf("There are %lu cycles in the graph.\n", circles.size());
+        for (auto x: circles)
+            print_elem(x);
+    } else {
+        printf("There are No cycles in the graph.\n");
     }
 
-    auto [cyclic, scc] = dgraph.extract_scc();
-    print_elem(scc);
-    auto m_graph = dgraph.meta_graph();
-    m_graph.print_graph();
+
+
+    // std::cout <<  << std::endl;
+    //  auto dfs_nodes = dgraph2.dfs();
+    //  print_elem(dfs_nodes);
+    // auto [is_acyclic, topo_sorted] = dgraph.topological_sort();
+    // std::cout << is_acyclic << std::endl;
+    // if (is_acyclic) {
+    // while (!topo_sorted.empty()) {
+    // auto tmp = topo_sorted.top();
+    // topo_sorted.pop();
+    // std::cout << tmp << ' ';
+    //}
+    // std::cout << std::endl;
+    //}
+
+    // auto [cyclic, scc] = dgraph.extract_scc();
+    // print_elem(scc);
+    // auto m_graph = dgraph.meta_graph();
+    // m_graph.print_graph();
 
     /*
     graph_sdk::DirectedGraph dgraph{};
