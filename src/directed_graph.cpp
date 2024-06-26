@@ -9,6 +9,7 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <random>
 #include <stack>
 #include <unordered_map>
 #include <utility>
@@ -255,16 +256,20 @@ bool DirectedGraph::has_cycle() const {
     return false;
 }
 
-void DirectedGraph::random_generate_dag(size_t V, size_t D)
-{
+void DirectedGraph::random_generate_dag(size_t V, size_t D) {
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
     srand(time(NULL));  // use current time as seed for random generator
+    std::vector<size_t> tmp(V);
+    std::iota(tmp.begin(), tmp.end(), 0);
+    std::shuffle(tmp.begin(), tmp.end(), rng);
     adjacency_.assign(V, std::set<size_t>{});
-    for (int i = 0; i < V; i++) {
+
+    for (auto i : tmp) {
         for (int j = 0; j < V; j++) {
             if (i == j) continue;
             adjacency_[i].insert(j);
-            if (DirectedGraph::has_cycle() || rand() % V >= D)
-            {
+            if (DirectedGraph::has_cycle() || rand() % V >= D) {
                 auto it = adjacency_[i].find(j);
                 adjacency_[i].erase(it);
             }

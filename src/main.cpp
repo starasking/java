@@ -13,7 +13,7 @@ int main() {
 
     graph_sdk::DirectedGraph dgraph{};
     //dgraph.random_generate(10, 2);
-    dgraph.random_generate_dag(10, 7);
+    dgraph.random_generate_dag(20, 7);
     dgraph.print_graph();
 
     if (dgraph.has_cycle()) {
