@@ -20,8 +20,6 @@ namespace graph_sdk {
 
 // generation
 DirectedGraph::DirectedGraph(const Edges& edges) {
-    assert(adjacency_.empty());
-
     auto node = *edges.rbegin();
     adjacency_.resize(std::max(node.first, node.second) + 1);
 
@@ -29,13 +27,7 @@ DirectedGraph::DirectedGraph(const Edges& edges) {
                   [&](const auto& x) { adjacency_[x.first].insert(x.second); });
 }
 
-DirectedGraph::DirectedGraph(const Adjacency& input) {
-    assert(adjacency_.empty());
-    adjacency_ = input;
-}
-
 void DirectedGraph::random_generate(size_t V, size_t D) {
-    assert(adjacency_.empty());
     srand(time(NULL));  // use current time as seed for random generator
     adjacency_.assign(V, std::set<size_t>{});
     for (int i = 0; i < V; i++) {
@@ -58,7 +50,7 @@ bool DirectedGraph::add_edge(std::pair<size_t, size_t> arrow) {
 }
 
 bool DirectedGraph::remove_node(size_t idx) {
-    auto N = adjacency_.size();
+    const auto N = adjacency_.size();
     if (idx >= N) return false;
 
     if (idx == N - 1) {
@@ -105,7 +97,7 @@ void DirectedGraph::exchange_nodes(size_t n1, size_t n2) {
 void DirectedGraph::reset() {
     std::vector<NodeAttribute> attributes = DirectedGraph::get_attribute();
     std::set<size_t> missed{};
-    auto N = adjacency_.size();
+    const auto N = adjacency_.size();
 
     for (size_t i = 0; i < N; ++i) {
         if (attributes[i] == NodeAttribute::isolated) missed.insert(i);
@@ -143,7 +135,7 @@ void DirectedGraph::reset() {
 
 // representation
 GraphMatrix DirectedGraph::extract_matrix() const {
-    auto N = adjacency_.size();
+    const auto N = adjacency_.size();
     GraphMatrix matrix(N, N);
     matrix.setZero();
     for (size_t i = 0; i < N; ++i) {
@@ -184,6 +176,16 @@ std::vector<NodeAttribute> DirectedGraph::get_attribute() const {
 
     return attribute;
 }
+
+Adjacency DirectedGraph::reverse_adjacency() const {
+    const auto N = adjacency_.size();
+    Adjacency reversed_adjacency(N, std::set<size_t>{});
+    for (auto i = 0; i < N; ++i) {
+        std::for_each(adjacency_[i].begin(), adjacency_[i].end(),
+                      [&](const auto& x) { reversed_adjacency[x].insert(i); });
+    }
+    return reversed_adjacency;
+}
 // depth first search related algorithms
 void DirectedGraph::dfs_helper(size_t idx, std::vector<bool>& visited,
                                std::vector<size_t>& dfs_nodes) const {
@@ -195,7 +197,7 @@ void DirectedGraph::dfs_helper(size_t idx, std::vector<bool>& visited,
 }
 
 std::vector<size_t> DirectedGraph::dfs() const {
-    auto N = adjacency_.size();
+    const auto N = adjacency_.size();
     std::vector<bool> visited(N, false);
     std::vector<size_t> dfs_nodes{};
 
@@ -251,6 +253,23 @@ bool DirectedGraph::has_cycle() const {
             return true;
     }
     return false;
+}
+
+void DirectedGraph::random_generate_dag(size_t V, size_t D)
+{
+    srand(time(NULL));  // use current time as seed for random generator
+    adjacency_.assign(V, std::set<size_t>{});
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (i == j) continue;
+            adjacency_[i].insert(j);
+            if (DirectedGraph::has_cycle() || rand() % V >= D)
+            {
+                auto it = adjacency_[i].find(j);
+                adjacency_[i].erase(it);
+            }
+        }
+    }
 }
 
 bool DirectedGraph::extract_scc_helper(size_t i, std::vector<size_t>& visited,
@@ -344,7 +363,7 @@ std::vector<std::vector<size_t>> DirectedGraph::extract_simple_cycles() const {
     if (!cyclic) return cycles;
     print_elem(scc);
 
-    auto N = adjacency_.size();
+    const auto N = adjacency_.size();
     std::vector<size_t> chain{};
     std::vector<int> visited(N, 0);
     for (size_t i = 0; i < adjacency_.size(); ++i) {

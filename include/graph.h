@@ -77,11 +77,12 @@ class DirectedGraph {
                            const std::vector<size_t>& scc,
                            std::vector<std::vector<size_t>>& cycles) const;
     std::vector<NodeAttribute> get_attribute() const;
+    Adjacency reverse_adjacency() const;
 
    public:
     DirectedGraph() = default;
     explicit DirectedGraph(const Edges&);
-    explicit DirectedGraph(const Adjacency&);
+    explicit DirectedGraph(const Adjacency& adjacency): adjacency_(adjacency){}
 
     // Basics
     void print_graph() const;
@@ -99,6 +100,7 @@ class DirectedGraph {
 
     // Random generate
     void random_generate(size_t V, size_t D);
+    void random_generate_dag(size_t V, size_t D);
 
     // Algorithm
     std::vector<size_t> dfs() const;
