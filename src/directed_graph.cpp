@@ -135,13 +135,23 @@ void DirectedGraph::reset() {
 }
 
 // representation
-GraphMatrix DirectedGraph::extract_matrix() const {
+arma::Mat<size_t> DirectedGraph::extract_matrix() const {
     const auto N = adjacency_.size();
-    GraphMatrix matrix(N, N);
-    matrix.setZero();
+    auto matrix = arma::Mat<size_t>(N, N).fill(0);
     for (size_t i = 0; i < N; ++i) {
         for (const auto& x : adjacency_[i]) {
             matrix(i, x) = 1;  // TODO: for weighted?
+        }
+    }
+    return matrix;
+}
+arma::Mat<int> DirectedGraph::extract_di_matrix() const {
+    const auto N = adjacency_.size();
+    auto matrix = arma::Mat<int>(N, N).fill(0);
+    for (size_t i = 0; i < N; ++i) {
+        for (const auto& x : adjacency_[i]) {
+            matrix(i, x) = 1;  // TODO: for weighted?
+            matrix(x, i) = -1;
         }
     }
     return matrix;

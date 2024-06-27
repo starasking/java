@@ -15,11 +15,9 @@ Traverse
 
 Acyclic?
 ################################################################################
-This problem can be solved using dfs, as well as bfs.
 
 Topological Sort
 ################################################################################
-This problem can be solved using dfs, as well as bfs.
 
 Strongly connected component
 ################################################################################

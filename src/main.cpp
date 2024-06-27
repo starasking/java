@@ -15,7 +15,9 @@ int main() {
     //dgraph.random_generate(10, 2);
     dgraph.random_generate_dag(20, 7);
     dgraph.print_graph();
+    dgraph.extract_matrix().raw_print();
 
+    /*
     if (dgraph.has_cycle()) {
         auto circles = dgraph.extract_simple_cycles();
         printf("There are %lu cycles in the graph.\n", circles.size());
@@ -24,6 +26,7 @@ int main() {
     } else {
         printf("There are No cycles in the graph.\n");
     }
+    */
 
 
 

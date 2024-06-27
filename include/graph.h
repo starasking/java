@@ -3,8 +3,8 @@
 #ifndef GRAPH_SDK_DIRECTEDGRAPH_H
 #define GRAPH_SDK_DIRECTEDGRAPH_H
 
-#include <Eigen/Dense>
 #include <algorithm>
+#include <armadillo>
 #include <map>
 #include <set>
 #include <stack>
@@ -44,7 +44,6 @@ using WeightedEdges =
 // WeightedEdgeCmp>;
 //  GeneralEdges = std::unordered_map<std::pair<size_t, size_t>, Edge>;
 
-using GraphMatrix = Eigen::Matrix<size_t, Eigen::Dynamic, Eigen::Dynamic>;
 using Adjacency = std::vector<std::set<size_t>>;
 enum class NodeAttribute { unlabelled, source, sink, source_sink, isolated };
 
@@ -82,7 +81,8 @@ class DirectedGraph {
    public:
     DirectedGraph() = default;
     explicit DirectedGraph(const Edges&);
-    explicit DirectedGraph(const Adjacency& adjacency): adjacency_(adjacency){}
+    explicit DirectedGraph(const Adjacency& adjacency)
+        : adjacency_(adjacency) {}
 
     // Basics
     void print_graph() const;
@@ -91,7 +91,8 @@ class DirectedGraph {
     bool remove_node(size_t node);
     bool remove_edge(std::pair<size_t, size_t> arrow);
 
-    GraphMatrix extract_matrix() const;
+    arma::Mat<size_t> extract_matrix() const;
+    arma::Mat<int> extract_di_matrix() const;
     Edges extract_edges() const;
 
     // Modify
@@ -127,7 +128,6 @@ class DiWeightedGraph : public DirectedGraph {
     bool remove_node(size_t node);
     bool remove_edge(std::pair<size_t, size_t> arrow);
 
-    // GraphMatrix extract_matrix() const;
 };
 
 }  // namespace graph_sdk
