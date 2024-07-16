@@ -5,11 +5,11 @@
 
 #include <algorithm>
 #include <iostream>
-#include <vector>
 #include <map>
 #include <set>
+#include <vector>
 
-
+namespace graph_sdk {
 template <typename Container>
 void print_elem(const Container& container) {
     std::for_each(container.begin(), container.end(),
@@ -17,20 +17,11 @@ void print_elem(const Container& container) {
     std::cout << std::endl;
 }
 
-/*
-template <typename K, typename V, typename Map>
-bool add_to_map(K key, V value, Map& map_t) {
-    if (map_t.find(key) != map_t.end()) {
-        auto [insert, state] = map_t[key].insert(value);
-        return state;
-    } else {
-        map_t[key] = std::set<int>{value};
-        return true;
-    }
+template <typename Container2d>
+void print_elem_2d(const Container2d& container2d) {
+    std::for_each(container2d.begin(), container2d.end(),
+                  [](const auto& x) {print_elem(x); });
 }
-
-std::vector<int> extract_path(int node, const std::map<int, int>& upstreams);
-*/
-
+}  // namespace graph_sdk
 
 #endif

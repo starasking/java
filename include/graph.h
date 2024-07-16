@@ -4,13 +4,13 @@
 #define GRAPH_SDK_DIRECTEDGRAPH_H
 
 #include <algorithm>
-#include <armadillo>
-#include <map>
 #include <set>
 #include <stack>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+#include "../include/matrix.h"
 
 namespace graph_sdk {
 
@@ -45,6 +45,7 @@ using WeightedEdges =
 //  GeneralEdges = std::unordered_map<std::pair<size_t, size_t>, Edge>;
 
 using Adjacency = std::vector<std::set<size_t>>;
+
 enum class NodeAttribute { unlabelled, source, sink, source_sink, isolated };
 
 struct Node {
@@ -59,6 +60,8 @@ struct Edge {
 class DirectedGraph {
    private:
     Adjacency adjacency_{};
+    size_t VN_{};
+    size_t EN_{};
 
     // helpers
    protected:
@@ -76,13 +79,14 @@ class DirectedGraph {
                            const std::vector<size_t>& scc,
                            std::vector<std::vector<size_t>>& cycles) const;
     std::vector<NodeAttribute> get_attribute() const;
-    Adjacency reverse_adjacency() const;
 
    public:
     DirectedGraph() = default;
+    explicit DirectedGraph(const size_t N);
     explicit DirectedGraph(const Edges&);
     explicit DirectedGraph(const Adjacency& adjacency)
         : adjacency_(adjacency) {}
+    explicit DirectedGraph(const Matrix<size_t>& matrix);
 
     // Basics
     void print_graph() const;
@@ -90,10 +94,14 @@ class DirectedGraph {
     bool add_edge(std::pair<size_t, size_t> arrow);
     bool remove_node(size_t node);
     bool remove_edge(std::pair<size_t, size_t> arrow);
+    bool random_remove_edges(size_t n);
 
-    arma::Mat<size_t> extract_matrix() const;
-    arma::Mat<int> extract_di_matrix() const;
+    Matrix<size_t> extract_matrix() const;
+    Matrix<int> extract_di_matrix() const;
     Edges extract_edges() const;
+    size_t calculate_edge_num() const;
+    size_t fetch_edge_num() const;
+    DirectedGraph reverse_graph() const;
 
     // Modify
     void reset();
@@ -102,6 +110,8 @@ class DirectedGraph {
     // Random generate
     void random_generate(size_t V, size_t D);
     void random_generate_dag(size_t V, size_t D);
+    DirectedGraph generate_bipartite_dag() const;
+    DirectedGraph graph_shuffle() const;
 
     // Algorithm
     std::vector<size_t> dfs() const;
@@ -122,12 +132,9 @@ class DiWeightedGraph : public DirectedGraph {
     explicit DiWeightedGraph(const WeightedEdges& edge);
 
     // Basics
-    // void print_graph() const;
-    // void print_matrix() const;
     bool add_edge(std::tuple<size_t, size_t, int> weighted_edge);
     bool remove_node(size_t node);
     bool remove_edge(std::pair<size_t, size_t> arrow);
-
 };
 
 }  // namespace graph_sdk

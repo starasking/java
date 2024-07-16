@@ -20,65 +20,116 @@
 namespace graph_sdk {
 
 // generation
+DirectedGraph::DirectedGraph(const size_t N) {
+    adjacency_ = std::vector<std::set<size_t>>(N, std::set<size_t>{});
+    VN_ = N;
+}
+
 DirectedGraph::DirectedGraph(const Edges& edges) {
     auto node = *edges.rbegin();
     adjacency_.resize(std::max(node.first, node.second) + 1);
 
     std::for_each(edges.begin(), edges.end(),
                   [&](const auto& x) { adjacency_[x.first].insert(x.second); });
+    VN_ = adjacency_.size();
+    EN_ = edges.size();
+}
+
+DirectedGraph::DirectedGraph(const Matrix<size_t>& matrix) {
+    // TODO: elem: 0 or 1;
+    assert(matrix.rows() == matrix.cols());
+    VN_ = matrix.cols();
+    EN_ = 0;
+    adjacency_.resize(VN_);
+    for (auto i = 0; i < VN_; ++i) {
+        for (auto j = 0; j < VN_; ++j) {
+            if (matrix(i, j) == 1) {
+                adjacency_[i].insert(j);
+                EN_ += 1;
+            }
+        }
+    }
 }
 
 void DirectedGraph::random_generate(size_t V, size_t D) {
-    srand(time(NULL));  // use current time as seed for random generator
+    srand(time(NULL));
     adjacency_.assign(V, std::set<size_t>{});
+    VN_ = V;
+    EN_ = 0;
+
     for (int i = 0; i < V; i++) {
         for (int j = 0; j < V; j++) {
             if (i == j) continue;
             if (rand() % V < D) {
                 adjacency_[i].insert(j);
+                EN_ += 1;
             }
         }
     }
 }
 // modification
 bool DirectedGraph::add_edge(std::pair<size_t, size_t> arrow) {
-    if (auto max_tmp = std::max(arrow.first, arrow.second);
-        max_tmp >= adjacency_.size()) {
+    if (auto max_tmp = std::max(arrow.first, arrow.second); max_tmp >= VN_) {
         adjacency_.resize(max_tmp + 1);
     }
     auto tmp = adjacency_[arrow.first].insert(arrow.second);
+    VN_ = adjacency_.size();
+    if (tmp.second) EN_ += 1;
     return tmp.second;
 }
 
 bool DirectedGraph::remove_node(size_t idx) {
-    const auto N = adjacency_.size();
-    if (idx >= N) return false;
+    if (idx >= VN_) return false;
 
-    if (idx == N - 1) {
+    if (idx == VN_ - 1) {
         adjacency_.resize(idx);
+        VN_ -= 1;
+        EN_ -= adjacency_[idx].size();
     } else if (!adjacency_[idx].empty()) {
         adjacency_[idx] = {};
+        EN_ -= adjacency_[idx].size();
     }
 
     std::for_each(adjacency_.begin(), adjacency_.end(), [&](auto& x) {
-        if (auto it = x.find(idx); it != x.end()) x.erase(it);
+        if (auto it = x.find(idx); it != x.end()) {
+            x.erase(it);
+            EN_ -= 1;
+        }
     });
-
     return true;
 }
 
 bool DirectedGraph::remove_edge(std::pair<size_t, size_t> arrow) {
-    if (arrow.first >= adjacency_.size()) return false;
+    if (arrow.first >= VN_) return false;
     if (auto it = adjacency_[arrow.first].find(arrow.second);
         it != adjacency_[arrow.first].end()) {
         adjacency_[arrow.first].erase(it);
+        EN_ -= 1;
         return true;
     } else
         return false;
 }
 
+bool DirectedGraph::random_remove_edges(size_t n) {
+    if (n > EN_) return false;
+    Edges edges = DirectedGraph::extract_edges();
+
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
+
+    std::vector<size_t> tmp(EN_, 0);
+    std::iota(tmp.begin(), tmp.end(), 0);
+    std::shuffle(tmp.begin(), tmp.end(), rng);
+    for (auto i = 0; i < n; ++i) {
+        auto it = std::next(edges.begin(), tmp[i]);
+        remove_edge(*it);
+    }
+    EN_ -= n;
+    return true;
+}
+
 void DirectedGraph::exchange_nodes(size_t n1, size_t n2) {
-    assert(std::max(n1, n2) < adjacency_.size());
+    assert(std::max(n1, n2) < VN_);
     std::swap(adjacency_[n1], adjacency_[n2]);
 
     for (auto& x : adjacency_) {
@@ -98,10 +149,12 @@ void DirectedGraph::exchange_nodes(size_t n1, size_t n2) {
 void DirectedGraph::reset() {
     std::vector<NodeAttribute> attributes = DirectedGraph::get_attribute();
     std::set<size_t> missed{};
-    const auto N = adjacency_.size();
+    const auto N = VN_;
 
     for (size_t i = 0; i < N; ++i) {
-        if (attributes[i] == NodeAttribute::isolated) missed.insert(i);
+        if (attributes[i] == NodeAttribute::isolated) {
+            missed.insert(i);
+        }
     }
 
     auto it = missed.begin();
@@ -119,7 +172,8 @@ void DirectedGraph::reset() {
     for (auto [key, value] : exchange_ids) {
         std::swap(adjacency_[key], adjacency_[value]);
     }
-    adjacency_.resize(adjacency_.size() - missed.size());
+    VN_ = adjacency_.size() - missed.size();
+    adjacency_.resize(VN_);
 
     for (auto& x : adjacency_) {
         if (x.empty()) continue;
@@ -132,46 +186,56 @@ void DirectedGraph::reset() {
                 ++it;
         }
     }
+    EN_ = DirectedGraph::calculate_edge_num();
 }
 
 // representation
-arma::Mat<size_t> DirectedGraph::extract_matrix() const {
-    const auto N = adjacency_.size();
-    auto matrix = arma::Mat<size_t>(N, N).fill(0);
-    for (size_t i = 0; i < N; ++i) {
+Matrix<size_t> DirectedGraph::extract_matrix() const {
+    auto matrix = Matrix<size_t>(VN_, VN_);
+    for (size_t i = 0; i < VN_; ++i) {
         for (const auto& x : adjacency_[i]) {
-            matrix(i, x) = 1;  // TODO: for weighted?
+            matrix(i, x) = 1;
         }
     }
     return matrix;
 }
-arma::Mat<int> DirectedGraph::extract_di_matrix() const {
-    const auto N = adjacency_.size();
-    auto matrix = arma::Mat<int>(N, N).fill(0);
-    for (size_t i = 0; i < N; ++i) {
+Matrix<int> DirectedGraph::extract_di_matrix() const {
+    auto matrix = Matrix<int>(VN_, VN_);
+    for (size_t i = 0; i < VN_; ++i) {
         for (const auto& x : adjacency_[i]) {
-            matrix(i, x) = 1;  // TODO: for weighted?
+            matrix(i, x) = 1;
             matrix(x, i) = -1;
         }
     }
     return matrix;
 }
 
+size_t DirectedGraph::fetch_edge_num() const {
+    return EN_;
+}
+
+size_t DirectedGraph::calculate_edge_num() const {
+    size_t en = 0;
+    std::for_each(adjacency_.begin(), adjacency_.end(),
+                  [&](const auto& x) { en += x.size(); });
+    return en;
+}
 Edges DirectedGraph::extract_edges() const {
     Edges edges;
-    for (size_t i = 0; i < adjacency_.size(); ++i) {
+    for (size_t i = 0; i < VN_; ++i) {
         for (const auto& y : adjacency_[i]) edges.insert({i, y});
     }
     return edges;
 }
 
 std::vector<NodeAttribute> DirectedGraph::get_attribute() const {
-    std::vector<NodeAttribute> attribute(adjacency_.size(),
+    std::vector<NodeAttribute> attribute(VN_,
                                          NodeAttribute::unlabelled);
-    for (auto i = 0; i < adjacency_.size(); ++i) {
-        if (adjacency_.empty()) {
-            if (attribute[i] == NodeAttribute::unlabelled)
+    for (auto i = 0; i < VN_; ++i) {
+        if (adjacency_[i].empty()) {
+            if (attribute[i] == NodeAttribute::unlabelled) {
                 attribute[i] = NodeAttribute::isolated;
+            }
         } else {
             if (attribute[i] == NodeAttribute::unlabelled)
                 attribute[i] = NodeAttribute::source;
@@ -188,14 +252,14 @@ std::vector<NodeAttribute> DirectedGraph::get_attribute() const {
     return attribute;
 }
 
-Adjacency DirectedGraph::reverse_adjacency() const {
-    const auto N = adjacency_.size();
-    Adjacency reversed_adjacency(N, std::set<size_t>{});
-    for (auto i = 0; i < N; ++i) {
+DirectedGraph DirectedGraph::reverse_graph() const {
+    DirectedGraph g{VN_};
+    for (auto i = 0; i < VN_; ++i) {
         std::for_each(adjacency_[i].begin(), adjacency_[i].end(),
-                      [&](const auto& x) { reversed_adjacency[x].insert(i); });
+                      [&](const auto& x) { g.adjacency_[x].insert(i); });
     }
-    return reversed_adjacency;
+
+    return g;
 }
 // depth first search related algorithms
 void DirectedGraph::dfs_helper(size_t idx, std::vector<bool>& visited,
@@ -208,11 +272,10 @@ void DirectedGraph::dfs_helper(size_t idx, std::vector<bool>& visited,
 }
 
 std::vector<size_t> DirectedGraph::dfs() const {
-    const auto N = adjacency_.size();
-    std::vector<bool> visited(N, false);
+    std::vector<bool> visited(VN_, false);
     std::vector<size_t> dfs_nodes{};
 
-    for (auto i = 0; i < N; ++i) {
+    for (auto i = 0; i < VN_; ++i) {
         if (!visited[i]) DirectedGraph::dfs_helper(i, visited, dfs_nodes);
     }
     return dfs_nodes;
@@ -233,10 +296,9 @@ bool DirectedGraph::topo_sort_helper(size_t i, std::stack<size_t>& visiting,
 }
 
 std::pair<bool, std::stack<size_t>> DirectedGraph::topological_sort() const {
-    const auto N = adjacency_.size();
     std::stack<size_t> visiting{};
-    std::vector<size_t> visited(N, 0);
-    for (auto i = 0; i < N; ++i) {
+    std::vector<size_t> visited(VN_, 0);
+    for (auto i = 0; i < VN_; ++i) {
         if (visited[i] == 0 &&
             !DirectedGraph::topo_sort_helper(i, visiting, visited))
             return std::make_pair(false, std::stack<size_t>{});
@@ -269,22 +331,61 @@ bool DirectedGraph::has_cycle() const {
 void DirectedGraph::random_generate_dag(size_t V, size_t D) {
     auto rd = std::random_device{};
     auto rng = std::default_random_engine{rd()};
-    srand(time(NULL));  // use current time as seed for random generator
+
     std::vector<size_t> tmp(V);
     std::iota(tmp.begin(), tmp.end(), 0);
     std::shuffle(tmp.begin(), tmp.end(), rng);
     adjacency_.assign(V, std::set<size_t>{});
+    VN_ = V;
+    EN_ = 0;
 
     for (auto i : tmp) {
         for (int j = 0; j < V; j++) {
             if (i == j) continue;
             adjacency_[i].insert(j);
+            EN_ += 1;
             if (DirectedGraph::has_cycle() || rand() % V >= D) {
                 auto it = adjacency_[i].find(j);
                 adjacency_[i].erase(it);
+                EN_ -= 1;
             }
         }
     }
+}
+
+DirectedGraph DirectedGraph::generate_bipartite_dag() const {
+    DirectedGraph graph{VN_ + EN_};
+    graph.VN_ = VN_ + EN_;
+    graph.EN_ = 2 * EN_;
+    size_t n = VN_;
+
+    for (size_t i = 0; i < VN_; ++i) {
+        std::for_each(adjacency_[i].begin(), adjacency_[i].end(),
+                      [&](const auto& x) {
+                          graph.adjacency_[n].insert(i);
+                          graph.adjacency_[n].insert(x);
+                          n += 1;
+                      });
+    }
+    return graph;
+}
+
+DirectedGraph DirectedGraph::graph_shuffle() const {
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
+    std::vector<size_t> tmp(adjacency_.size());
+    std::iota(tmp.begin(), tmp.end(), 0);
+    std::shuffle(tmp.begin(), tmp.end(), rng);
+    // print_elem(tmp);
+
+    DirectedGraph graph;
+    for (auto i = 0; i < adjacency_.size(); ++i) {
+        for (auto x : adjacency_[i]) {
+            graph.add_edge({tmp[i], tmp[x]});
+        }
+    }
+
+    return graph;
 }
 
 bool DirectedGraph::extract_scc_helper(size_t i, std::vector<size_t>& visited,
@@ -308,14 +409,13 @@ bool DirectedGraph::extract_scc_helper(size_t i, std::vector<size_t>& visited,
 }
 // scc: strongly connected components
 std::pair<bool, std::vector<size_t>> DirectedGraph::extract_scc() const {
-    const auto N = adjacency_.size();
-    std::vector<size_t> scc(N);
-    std::vector<size_t> visited(N, 0);
+    std::vector<size_t> scc(VN_);
+    std::vector<size_t> visited(VN_, 0);
     std::iota(scc.begin(), scc.end(), 0);
     std::stack<size_t> pseudo_topo{};
 
     bool cyclic = false;
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < VN_; ++i) {
         if (visited[i] == 0 && extract_scc_helper(i, visited, pseudo_topo, scc))
             cyclic = true;
     }
@@ -376,14 +476,13 @@ std::vector<std::vector<size_t>> DirectedGraph::extract_simple_cycles() const {
     std::vector<std::vector<size_t>> cycles{};
     auto [cyclic, scc] = DirectedGraph::extract_scc();
     if (!cyclic) return cycles;
-    print_elem(scc);
+    // print_elem(scc);
 
-    const auto N = adjacency_.size();
     std::vector<size_t> chain{};
-    std::vector<int> visited(N, 0);
+    std::vector<int> visited(VN_, 0);
     for (size_t i = 0; i < adjacency_.size(); ++i) {
         chain.clear();
-        std::fill_n(visited.begin(), N, -1);
+        std::fill_n(visited.begin(), VN_, -1);
         std::fill_n(visited.begin() + i, visited.end() - visited.begin() - i,
                     0);
         DirectedGraph::extract_sc_helper(i, chain, visited, scc, cycles);
@@ -406,7 +505,9 @@ void DirectedGraph::print_matrix() const {
     auto matrix = DirectedGraph::extract_matrix();
     // TODO: better visualization
     std::cout << "=========== print graph matrix ==========" << std::endl;
-    std::cout << matrix << std::endl;
+    // std::for_each(matrix.begin(), matrix.end(),
+    //[](const auto& x){print_elem(x);});
+    matrix.print();
 }
 
 /*

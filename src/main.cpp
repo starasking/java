@@ -1,61 +1,72 @@
+#include <unistd.h>
+
 #include <iostream>
 
 #include "../include/graph.h"
+#include "../include/isomorphic.h"
 #include "../include/utils.h"
 
 int main() {
     std::cout << "Hello Graph!\n";
+    // graph_sdk::Edges edges = {{0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
+    // graph_sdk::DirectedGraph g1{edges};
+    //graph_sdk::DirectedGraph g1{};
+    //g1.random_generate_dag(10, 3);
+     graph_sdk::Edges edges = {{0, 9}, {1, 7}, {0, 2}, {2, 3}, {2, 9}, {3, 9},
+    {4, 0}, {5, 3}, {1, 6}, {6, 3}, {6, 4},
+    {7, 4}, {7, 5}, {8, 1}, {8, 0}, {8, 6}};
+     graph_sdk::DirectedGraph g1{edges};
+    //g1.reset();
+    g1.print_graph();
 
-    // graph_sdk::Edges edges = {{0, 1}, {1, 2}, {2, 0}};//3}, {3, 4}, {4, 0}};
-    // graph_sdk::Edges edges = {{0, 1}, {1, 2}, {1, 4}, {4, 2}, {4, 3}, {3, 5},
-    //{5, 2}, {3, 2}, {8, 6}, {6, 3}};//, {5, 8}};
-    // graph_sdk::DirectedGraph dgraph(edges);
+    g1 = g1.generate_bipartite_dag();
+    g1.print_graph();
 
-    graph_sdk::DirectedGraph dgraph{};
-    //dgraph.random_generate(10, 2);
-    dgraph.random_generate_dag(20, 7);
-    dgraph.print_graph();
-    dgraph.extract_matrix().raw_print();
+    auto m1 = g1.extract_di_matrix();
+    // m1.print();
+    auto r1 = paint_graph(m1);
+    auto [idx1, nb1] = r1.row_sort_with_indice();
+
+    std::cout << "sorted node description:\n";
+    nb1.print();
+    printf("==================\n");
 
     /*
-    if (dgraph.has_cycle()) {
-        auto circles = dgraph.extract_simple_cycles();
-        printf("There are %lu cycles in the graph.\n", circles.size());
-        for (auto x: circles)
-            print_elem(x);
-    } else {
-        printf("There are No cycles in the graph.\n");
+    bool equal = true;
+    int i = 0;
+    const size_t N = 100;
+    while (equal) {
+        srand(time(NULL));  // use current time as seed for random generator
+        size_t V = rand() % (N -1) + 1;
+        g1.random_generate_dag(10, 2);
+        std::cout << "edge num = " << g1.fetch_edge_num() << std::endl;
+
+        g1.reset();
+        g1.print_graph();
+        g1 = g1.generate_bipartite_dag();
+        g1.print_graph();
+
+        auto m1 = g1.extract_di_matrix();
+        m1.print();
+
+        // auto edge_color = paint_graph(dmatrix);
+        auto r1 = paint_graph(m1);
+        auto [idx1, nb1] = r1.row_sort_with_indice();
+        nb1.print();
+        printf("==================\n");
+
+        auto g2 = g1.graph_shuffle();
+        g2.print_graph();
+        auto m2 = g2.extract_di_matrix();
+        auto r2 = paint_graph(m2);
+        auto [idx2, nb2] = r2.row_sort_with_indice();
+        nb2.print();
+        printf("==================\n");
+        ++i;
+        std::cout << i << ": " << (nb1 == nb2) << std::endl;
+        equal = (nb1 == nb2);
+        std::getchar();
+        //usleep(3000000);
     }
-    */
-
-
-
-    // std::cout <<  << std::endl;
-    //  auto dfs_nodes = dgraph2.dfs();
-    //  print_elem(dfs_nodes);
-    // auto [is_acyclic, topo_sorted] = dgraph.topological_sort();
-    // std::cout << is_acyclic << std::endl;
-    // if (is_acyclic) {
-    // while (!topo_sorted.empty()) {
-    // auto tmp = topo_sorted.top();
-    // topo_sorted.pop();
-    // std::cout << tmp << ' ';
-    //}
-    // std::cout << std::endl;
-    //}
-
-    // auto [cyclic, scc] = dgraph.extract_scc();
-    // print_elem(scc);
-    // auto m_graph = dgraph.meta_graph();
-    // m_graph.print_graph();
-
-    /*
-    graph_sdk::DirectedGraph dgraph{};
-    //state = dgraph.remove_edge(5, 2);
-    dgraph.print_graph();
-    dgraph.print_nodes();
-    //std::cout << topo_result.first << std::endl;
-    //std::cout << dgraph.has_cycle() << std::endl;
-    //graph_sdk::DirectedGraph dg2{std::move(dgraph)};
     */
 }
