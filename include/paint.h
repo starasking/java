@@ -1,7 +1,7 @@
 // Copyright (c) 2024 Xuemei Wang. All rights reserved.
 
-#ifndef GRAPH_SDK_ISOMORPHIC_H
-#define GRAPH_SDK_ISOMORPHIC_H
+#ifndef GRAPH_SDK_PAINT_H
+#define GRAPH_SDK_PAINT_H
 
 #include <algorithm>
 #include <functional>

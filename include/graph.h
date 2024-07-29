@@ -75,7 +75,7 @@ class DirectedGraph {
                             std::stack<size_t>& pseudo_topo,
                             std::vector<size_t>& scc) const;
     void extract_sc_helper(size_t curr, std::vector<size_t>& chain,
-                           std::vector<int>& visited,
+                           std::vector<bool>& valid,
                            const std::vector<size_t>& scc,
                            std::vector<std::vector<size_t>>& cycles) const;
     std::vector<NodeAttribute> get_attribute() const;

@@ -3,33 +3,36 @@
 #include <iostream>
 
 #include "../include/graph.h"
-#include "../include/isomorphic.h"
+#include "../include/paint.h"
 #include "../include/utils.h"
 
 int main() {
     std::cout << "Hello Graph!\n";
     // graph_sdk::Edges edges = {{0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
     // graph_sdk::DirectedGraph g1{edges};
-    //graph_sdk::DirectedGraph g1{};
-    //g1.random_generate_dag(10, 3);
-     graph_sdk::Edges edges = {{0, 9}, {1, 7}, {0, 2}, {2, 3}, {2, 9}, {3, 9},
-    {4, 0}, {5, 3}, {1, 6}, {6, 3}, {6, 4},
-    {7, 4}, {7, 5}, {8, 1}, {8, 0}, {8, 6}};
-     graph_sdk::DirectedGraph g1{edges};
-    //g1.reset();
-    g1.print_graph();
+    // graph_sdk::DirectedGraph g1{};
+    // g1.random_generate_dag(10, 3);
+    // graph_sdk::Edges edges = {{0, 9}, {1, 7}, {0, 2}, {2, 3}, {2, 9}, {3, 9},
+    //{4, 0}, {5, 3}, {1, 6}, {6, 3}, {6, 4},
+    //{7, 4}, {7, 5}, {8, 1}, {8, 0}, {8, 6}};
+    graph_sdk::Edges edges = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 1}};
+    graph_sdk::DirectedGraph g1{edges};
+    auto [has_cycle, scc] = g1.extract_scc();
+    if(has_cycle)
+    {
+        graph_sdk::print_elem(scc);
+    }
+    // g1.reset();
+    //g1.print_graph();
 
-    g1 = g1.generate_bipartite_dag();
-    g1.print_graph();
+    //g1 = g1.generate_bipartite_dag();
+    //g1.print_graph();
 
-    auto m1 = g1.extract_di_matrix();
+    //auto m1 = g1.extract_di_matrix();
     // m1.print();
-    auto r1 = paint_graph(m1);
-    auto [idx1, nb1] = r1.row_sort_with_indice();
+    //auto r1 = paint_graph(m1);
+    //auto [idx1, nb1] = r1.row_sort_with_indice();
 
-    std::cout << "sorted node description:\n";
-    nb1.print();
-    printf("==================\n");
 
     /*
     bool equal = true;

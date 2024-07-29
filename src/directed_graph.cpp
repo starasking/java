@@ -210,9 +210,7 @@ Matrix<int> DirectedGraph::extract_di_matrix() const {
     return matrix;
 }
 
-size_t DirectedGraph::fetch_edge_num() const {
-    return EN_;
-}
+size_t DirectedGraph::fetch_edge_num() const { return EN_; }
 
 size_t DirectedGraph::calculate_edge_num() const {
     size_t en = 0;
@@ -229,8 +227,7 @@ Edges DirectedGraph::extract_edges() const {
 }
 
 std::vector<NodeAttribute> DirectedGraph::get_attribute() const {
-    std::vector<NodeAttribute> attribute(VN_,
-                                         NodeAttribute::unlabelled);
+    std::vector<NodeAttribute> attribute(VN_, NodeAttribute::unlabelled);
     for (auto i = 0; i < VN_; ++i) {
         if (adjacency_[i].empty()) {
             if (attribute[i] == NodeAttribute::unlabelled) {
@@ -281,29 +278,30 @@ std::vector<size_t> DirectedGraph::dfs() const {
     return dfs_nodes;
 }
 
-bool DirectedGraph::topo_sort_helper(size_t i, std::stack<size_t>& visiting,
+bool DirectedGraph::topo_sort_helper(size_t i,
+                                     std::stack<size_t>& reverse_ordered,
                                      std::vector<size_t>& visited) const {
     visited[i] = 1;
     for (const auto x : adjacency_[i]) {
         if (visited[x] == 1 ||
             (visited[x] == 0 &&
-             !DirectedGraph::topo_sort_helper(x, visiting, visited)))
+             !DirectedGraph::topo_sort_helper(x, reverse_ordered, visited)))
             return false;
     }
     visited[i] = 2;
-    visiting.push(i);
+    reverse_ordered.push(i);
     return true;
 }
 
 std::pair<bool, std::stack<size_t>> DirectedGraph::topological_sort() const {
-    std::stack<size_t> visiting{};
+    std::stack<size_t> reverse_ordered{};
     std::vector<size_t> visited(VN_, 0);
     for (auto i = 0; i < VN_; ++i) {
         if (visited[i] == 0 &&
-            !DirectedGraph::topo_sort_helper(i, visiting, visited))
+            !DirectedGraph::topo_sort_helper(i, reverse_ordered, visited))
             return std::make_pair(false, std::stack<size_t>{});
     }
-    return std::make_pair(true, visiting);
+    return std::make_pair(true, reverse_ordered);
 }
 
 bool DirectedGraph::has_cycle_helper(size_t idx,
@@ -450,10 +448,9 @@ DirectedGraph DirectedGraph::meta_graph() const {
 }
 
 void DirectedGraph::extract_sc_helper(
-    size_t curr, std::vector<size_t>& chain, std::vector<int>& visited,
+    size_t curr, std::vector<size_t>& chain, std::vector<bool>& valid,
     const std::vector<size_t>& scc,
     std::vector<std::vector<size_t>>& cycles) const {
-    visited[curr] = 1;
     chain.push_back(curr);
 
     for (auto x : adjacency_[curr]) {
@@ -461,14 +458,10 @@ void DirectedGraph::extract_sc_helper(
             chain.push_back(x);
             cycles.push_back(chain);
             chain.pop_back();
-        } else if (scc[x] == scc[chain[0]]) {
-            if (visited[x] == 0)
-                DirectedGraph::extract_sc_helper(x, chain, visited, scc,
-                                                 cycles);
+        } else if (scc[x] == scc[chain[0]] && valid[x]) {
+            DirectedGraph::extract_sc_helper(x, chain, valid, scc, cycles);
         }
     }
-
-    visited[curr] = 0;
     chain.pop_back();
 }
 
@@ -479,13 +472,12 @@ std::vector<std::vector<size_t>> DirectedGraph::extract_simple_cycles() const {
     // print_elem(scc);
 
     std::vector<size_t> chain{};
-    std::vector<int> visited(VN_, 0);
+    std::vector<bool> valid(VN_, false);
     for (size_t i = 0; i < adjacency_.size(); ++i) {
         chain.clear();
-        std::fill_n(visited.begin(), VN_, -1);
-        std::fill_n(visited.begin() + i, visited.end() - visited.begin() - i,
-                    0);
-        DirectedGraph::extract_sc_helper(i, chain, visited, scc, cycles);
+        std::fill_n(valid.begin(), VN_, false);
+        std::fill_n(valid.begin() + i, valid.end() - valid.begin() - i, true);
+        DirectedGraph::extract_sc_helper(i, chain, valid, scc, cycles);
     }
     return cycles;
 }

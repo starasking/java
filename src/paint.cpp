@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Xuemei Wang. All rights reserved.
 
-#include "../include/isomorphic.h"
+#include "../include/paint.h"
 
 #include "../include/graph.h"
 
