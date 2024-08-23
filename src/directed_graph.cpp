@@ -482,6 +482,27 @@ std::vector<std::vector<size_t>> DirectedGraph::extract_simple_cycles() const {
     return cycles;
 }
 
+std::vector<std::vector<size_t>> DirectedGraph::find_paths(size_t source,
+                                                           size_t sink) const {
+    std::vector<std::vector<size_t>> result{};
+    std::vector<size_t> path{};
+    find_path_helper(source, sink, path, result);
+    return result;
+}
+
+void DirectedGraph::find_path_helper(
+    size_t source, size_t sink, std::vector<size_t>& path,
+    std::vector<std::vector<size_t>>& paths) const {
+    path.push_back(source);
+    if (source == sink) paths.push_back(path);
+
+    for (const auto& x : adjacency_[source]) {
+        find_path_helper(x, sink, path, paths);
+    }
+    path.pop_back();
+}
+
+
 // for visilization and debug
 void DirectedGraph::print_graph() const {
     std::cout << "=========== print adjacency table ==========" << std::endl;

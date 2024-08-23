@@ -48,15 +48,12 @@ using Adjacency = std::vector<std::set<size_t>>;
 
 enum class NodeAttribute { unlabelled, source, sink, source_sink, isolated };
 
-struct Node {
-    size_t id;
-    int value;
-};
 struct Edge {
     size_t id;
     std::pair<size_t, size_t> arrow;
     int value;
 };
+
 class DirectedGraph {
    private:
     Adjacency adjacency_{};
@@ -64,7 +61,7 @@ class DirectedGraph {
     size_t EN_{};
 
     // helpers
-   protected:
+   //protected:
     void dfs_helper(size_t idx, std::vector<bool>& visited,
                     std::vector<size_t>& dfs_nodes) const;
 
@@ -78,6 +75,9 @@ class DirectedGraph {
                            std::vector<bool>& valid,
                            const std::vector<size_t>& scc,
                            std::vector<std::vector<size_t>>& cycles) const;
+    void find_path_helper(size_t source, size_t sink, std::vector<size_t>& path,
+                          std::vector<std::vector<size_t>>& paths) const;
+
     std::vector<NodeAttribute> get_attribute() const;
 
    public:
@@ -120,12 +120,25 @@ class DirectedGraph {
     std::pair<bool, std::vector<size_t>> extract_scc() const;
     DirectedGraph meta_graph() const;
     std::vector<std::vector<size_t>> extract_simple_cycles() const;
+    std::vector<std::vector<size_t>> find_paths(size_t source,
+                                                size_t sink) const;
 };
 
 class DiWeightedGraph : public DirectedGraph {
    private:
     Adjacency adjacency_{};
+    size_t VN_{};
+    size_t EN_{};
     WeightedEdges weighted_edges_{};
+    void find_one_path_helper(
+        size_t source, size_t sink,
+        const std::vector<std::unordered_map<size_t, int>>& flow_adjacency,
+        std::vector<size_t>& path) const;
+    bool update_flow_graph(
+        size_t source, size_t sink,
+        std::vector<std::unordered_map<size_t, int>>& flow_adjacency,
+        int& flow_value) const;
+    std::vector<std::unordered_map<size_t, int>> get_weighted_adjacency() const;
 
    public:
     DiWeightedGraph() = default;
@@ -135,6 +148,9 @@ class DiWeightedGraph : public DirectedGraph {
     bool add_edge(std::tuple<size_t, size_t, int> weighted_edge);
     bool remove_node(size_t node);
     bool remove_edge(std::pair<size_t, size_t> arrow);
+    bool is_positive_weighted() const;
+    int max_flow(size_t source, size_t sink) const;
+
 };
 
 }  // namespace graph_sdk

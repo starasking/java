@@ -16,6 +16,8 @@ include_directories(
 include_directories(
     ${EIGEN_ROOT_DIR}
 )
+find_package(Matplot++ REQUIRED)
+#add_subdirectory(matplotplusplus)
 
 if (BUILD_TESTS)
     add_definitions("-DTESTING")
@@ -24,3 +26,5 @@ endif ()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} ${SOURCES})
+#target_link_libraries(${PROJECT_NAME} PUBLIC matplot)
+target_link_libraries(${PROJECT_NAME} Matplot++::matplot)
